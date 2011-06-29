@@ -1,0 +1,12 @@
+<ivy-module version="1.0">
+    <info organisation="toolbox" module="wsdict"/>
+    <publications>
+      <artifact name="wsdict" type="jar"/>
+      <artifact name="wsdict-src" type="zip"/>
+    </publications>   
+    <dependencies>
+ 		     <dependency org="toolbox" name="wordsegment" rev="r22384MS"/>
+        <dependency org="external" name="junit" rev="4.1" />
+    </dependencies>
+    
+</ivy-module>

@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+
+<project xmlns:ivy="antlib:fr.jayasoft.ivy.ant" name="wsoffline" default="build" basedir=".">
+    <property file="${basedir}/default.properties"/>
+
+    <path id="classpath">
+        <pathelement location="${build.classes}"/>
+        <fileset dir="${lib.dir}">
+            <include name="*.jar" />
+        </fileset>
+    </path>
+
+    <!-- Initialization -->
+    <target name="init">
+        <mkdir dir="${build.dir}"/>
+        <touch datetime="01/25/1971 2:00 pm">
+            <fileset dir="${conf.dir}" includes="**/*.template"/>
+        </touch>
+
+        <copy todir="${conf.dir}" verbose="true">
+            <fileset dir="${conf.dir}" includes="**/*.template"/>
+            <mapper type="glob" from="*.template" to="*"/>
+        </copy>
+    </target>
+
+    <!-- Ivy resolve -->
+    <target name="resolve" unless="ivy.bypass">
+        <!--<delete><fileset dir="${lib.dir}" includes="**/*.jar,**/*.zip"/></delete>-->
+        <delete dir="${lib.dir}/wordsegment" />
+        <ivy:configure username="${ivy.auth.username}"
+            passwd="${ivy.auth.password}" /> 
+        <ivy:retrieve pattern="${lib.dir}/[artifact].[ext]"/>
+        <unzip src="${lib.dir}/wordsegment-lib.zip" dest="${lib.dir}" />
+    </target>
+
+
+    <!-- Build the project. -->
+    <target name="build" depends="init, resolve">
+        <mkdir dir="${build.classes}"/>
+        <javac
+            encoding="${build.encoding}"
+            srcdir="${src.dir}"
+            destdir="${build.classes}"
+            debug="${debug}"
+            optimize="${optimize}"
+            deprecation="${deprecation}">
+            <classpath refid="classpath"/>
+        </javac>
+        <copy todir="${build.classes}">
+            <fileset dir="${src.dir}">
+                <exclude name="**/*.java" />
+                <exclude name="**/*.bak" />
+                <exclude name="**/~*" />
+                <exclude name="**/.svn/**" />
+            </fileset>
+            <fileset dir="${exp.dir}">
+                <exclude name="**/*.java" />
+                <exclude name="**/*.bak" />
+                <exclude name="**/~*" />
+                <exclude name="**/.svn/**" />
+            </fileset>
+        </copy>
+    </target>
+
+
+    <!-- Clean built files. -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete file="${name}.jar"/>
+        <delete includeemptydirs="true">
+            <fileset dir="${lib.dir}" includes="**/*" excludes="**/.svn/*" />
+        </delete>
+    </target>
+
+    <!-- Build test cases. -->
+    <target name="build-test" depends="init, resolve">
+        <mkdir dir="${test.build.classes}" />
+        <javac destdir="${test.build.classes}" encoding="${build.encoding}">
+            <src path="${test.src.dir}"/>
+            <classpath refid="project.classpath"/>
+        </javac>
+        <copy todir="${test.build.classes}">
+            <fileset dir="${test.src.dir}">
+                <exclude name="**/*.java" />
+                <exclude name="**/*.bak" />
+                <exclude name="**/~*" />
+                <exclude name="**/.svn/**" />
+            </fileset>
+        </copy>
+    </target>
+
+    <!-- Make jar file -->
+    <target name="jar" depends="build">
+        <jar destfile="${build.dir}/${final.name}.jar" basedir="${build.classes}"/>
+        <zip destfile="${build.dir}/${final.name}-src.zip">
+            <fileset dir="src" excludes="**/.svn"/>
+        </zip>
+    </target>
+
+    <target name="test" depends="build, build-test"> 
+        <mkdir dir="${test.build.dir}/report" />
+        <mkdir dir="${test.build.dir}/report"/>
+        <antcall target="run_test">
+            <param name="run_test.classpath" value="test.classpath" />
+            <param name="run_test.report" value="${test.build.dir}/report" />
+            <param name="test.stoponfail" value="true" />
+        </antcall>
+    </target>
+
+    <target name="publish" depends="jar">
+        <delete file="${build.dir}/ivy.xml"/> <!-- somehow this doesn't get refreshed -->
+        <exec executable="svn">
+            <arg line="up"/>
+        </exec>
+        <exec executable="svnversion" outputproperty="svnversion">
+            <arg line="."/>
+        </exec>
+        <property name="revision" value="r${svnversion}"/>
+        <ivy:publish resolver="outfox" artifactspattern="${build.dir}/[artifact].[ext]" pubrevision="r${svnversion}"/>
+        <echo message="${final.name} released with version r${svnversion}"/>
+    </target>
+</project>
