@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var optimist = require('optimist')
-    .usage('Youdao JS Builder.\nUsage: $0 [Options] [module ..]')
+    .usage('Youdao JS Builder ' + require('./version').version + '\nUsage: $0 [Options] [module ..]')
     .options('compress', {
         alias: 'c',
         describe: 'Compress js code'
