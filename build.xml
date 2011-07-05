@@ -12,7 +12,7 @@
         <exec executable="svnversion" outputproperty="svnversion">
             <arg line="."/>
         </exec>
-        <property name="revision" value="r${svnversion}"/>
+        <property name="ivy.revision" value="r${svnversion}"/>
         <ivy:publish resolver="outfox" artifactspattern="${build.dir}/[artifact].[ext]" pubrevision="r${svnversion}"/>
         <echo message="${final.name} released with version r${svnversion}"/>
     </target>
