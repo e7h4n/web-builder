@@ -31,7 +31,6 @@ function mkdirSilent(dir) {
  * @modules 压缩后的代码会放到这个对象里
  */
 function processModule(moduleName, depsQueue, config, modules) {
-    console.log('process module:', moduleName);
     var fileName = moduleName;
     var deps = [];
     var i = 0;
@@ -43,6 +42,7 @@ function processModule(moduleName, depsQueue, config, modules) {
 
     var code = fs.readFileSync(path.resolve(config.srcDir, fileName), 'utf-8');
     var ast = uglifyjs.parser.parse(code);
+    ast = normlizePath(ast, path.dirname(path.resolve(config.srcDir, fileName)), config);
 
     deps = getDependencies(ast);
 
@@ -187,6 +187,48 @@ function generateCode(ast, name, compress) {
     }) + ";\n";
 }
 
+/**
+ * 统一所有 require 中的模块名路径
+ *
+ * @method normlizePath
+ * @param {Array}ast AST
+ * @param {String}relativePath
+ * @param {Object}config
+ * @return {Array} AST
+ */
+function normlizePath(ast, relativePath, config) {
+    for (var i=0, l=ast.length; i<l; i++) {
+        var obj = ast[i];
+
+        if (!obj) {
+            continue;
+        }
+
+        // [ 'call',
+        //   [ 'name', 'require' ],
+        //   [ [ 'string', 'modName' ] ] ]
+        if (
+            obj[0] === 'call' && 
+            obj[1] && 
+            obj[1][0] === 'name' && 
+            obj[1][1] === 'require'
+        ) {
+            var modName = obj[2][0][1];
+
+            if (modName.indexOf('.') === 0) {
+                modName = path.resolve(relativePath, modName).replace(config.srcDir, '').substr(1);
+                obj[2][0][1] = modName;
+            }
+        } else {
+            if (obj.constructor === Array) {
+                normlizePath(obj, relativePath, config);
+            }
+        }
+    }
+
+    return ast;
+}
+
 function build(argv) {
     var config = argv;
 
@@ -203,9 +245,7 @@ function build(argv) {
 
     config.module.forEach(function(mod) {
         var depsQueue = [];
-        console.log('\r==============================================================================');
-        console.log('Module:', mod);
-        console.log('==============================================================================\r');
+        console.log('Generate module:', mod);
         processModule(mod, depsQueue, config, modules);
 
         var comboFile = loaderCode;
@@ -216,7 +256,7 @@ function build(argv) {
             var dir = path.resolve(outputfile, '..');
             mkdirSilent(dir);
 
-            fs.writeFileSync(outputfile, dep !== mod ? modules[dep] : comboFile);
+            fs.writeFile(outputfile, dep !== mod ? modules[dep] : comboFile);
         });
     });
 }
