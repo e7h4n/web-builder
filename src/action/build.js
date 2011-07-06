@@ -61,7 +61,7 @@ function processModule(moduleName, depsQueue, config, modules) {
 
 /**
  * 获取一个模块的依赖关系
- * 
+ *
  * @method getDependencies
  * @param {Array}ast AST
  * @return {Array} 依赖数组
@@ -112,7 +112,7 @@ function getStaticDependencies(ast) {
         var stat = stats[i];
 
         if (stat.toString()
-        .indexOf("stat,call,name,define,") == 0) {
+                .indexOf("stat,call,name,define,") == 0) {
 
             // stat:
             // [ 'stat',
@@ -125,7 +125,7 @@ function getStaticDependencies(ast) {
             //    [ [ 'string', 'program' ],
             //      [ 'array', [ [Object], [Object] ] ],
             //      [ 'function', null, [ 'require' ], [] ] ]
-            if(args[1] && (args[1][0] == "array")) {
+            if (args[1] && (args[1][0] == "array")) {
 
                 // args[1]:
                 //   [ 'array', [ [ 'string', 'a' ], [ 'string', 'b' ] ] ]
@@ -176,7 +176,7 @@ function generateCode(ast, name, compress) {
 
     var pro = uglifyjs.uglify;
 
-    if(compress) {
+    if (compress) {
         ast = pro.ast_mangle(ast);
         ast = pro.ast_squeeze(ast);
     }
@@ -197,7 +197,7 @@ function generateCode(ast, name, compress) {
  * @return {Array} AST
  */
 function normlizePath(ast, relativePath, config) {
-    for (var i=0, l=ast.length; i<l; i++) {
+    for (var i = 0, l = ast.length; i < l; i++) {
         var obj = ast[i];
 
         if (!obj) {
@@ -208,11 +208,11 @@ function normlizePath(ast, relativePath, config) {
         //   [ 'name', 'require' ],
         //   [ [ 'string', 'modName' ] ] ]
         if (
-            obj[0] === 'call' && 
-            obj[1] && 
-            obj[1][0] === 'name' && 
-            obj[1][1] === 'require'
-        ) {
+                obj[0] === 'call' &&
+                        obj[1] &&
+                        obj[1][0] === 'name' &&
+                        obj[1][1] === 'require'
+                ) {
             var modName = obj[2][0][1];
 
             if (modName.indexOf('.') === 0) {
@@ -252,12 +252,18 @@ function build(argv) {
         depsQueue.push(mod);
         depsQueue.forEach(function(dep) {
             comboFile += modules[dep];
-            var outputfile = path.resolve(config.buildDir, dep.indexOf('.js') === -1 ? dep+'.js' : dep);
+            var outputfile = path.resolve(config.buildDir, dep.indexOf('.js') === -1 ? dep + '.js' : dep);
             var dir = path.resolve(outputfile, '..');
             mkdirSilent(dir);
+            fs.writeFileSync(outputfile, dep !== mod ? modules[dep] : comboFile, 'utf-8');
+            console.log('...progress ' + dep);
 
-            fs.writeFile(outputfile, dep !== mod ? modules[dep] : comboFile);
+            if (dep !== mod) {
+                fs.unlinkSync(outputfile);
+            }
         });
+
+        console.log('Successfully generated module ' + mod + '.');
     });
 }
 
