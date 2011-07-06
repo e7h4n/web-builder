@@ -22,7 +22,7 @@ function lint(argv) {
             var content = fs.readFileSync(fileName, 'utf-8');
             var result = JSHINT(content);
 
-            console.log("Lint %s ... %s", name, result ? '\033[1;32msuccess\033[0m' : '\033[1;31mfail\033[0m');
+            console.log("Lint %s ... %s", name, result ? '\033[1;32mpass\033[0m' : '\033[1;31mfail\033[0m');
 
             if (!result) {
                 JSHINT.errors.forEach(function(error) {

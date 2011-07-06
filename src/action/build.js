@@ -33,7 +33,7 @@ function build(argv) {
             comboFile += modules[dep];
         });
 
-        if (config['dry-run'] === false) {
+        if (!config['dry-run']) {
             var outputfile = path.resolve(config.buildDir, mod.indexOf('.js') === -1 ? mod + '.js' : mod);
             var dir = path.resolve(outputfile, '..');
             libmod.mkdirSilent(dir);
@@ -42,7 +42,7 @@ function build(argv) {
                 console.log('Successfully generated module ' + mod + '.');
             });
         } else {
-            console.log('Successfully generated module ' + mod + '.');
+            console.log('[Dry-run]Successfully generated module ' + mod + '.');
         }
     });
 }
