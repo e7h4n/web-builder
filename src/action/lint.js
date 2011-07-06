@@ -10,11 +10,10 @@ function lint(argv) {
     config.module = typeof config.module === 'string' ? [config.module] : config.module;
     config.ignores = typeof config['lint-ignore'] === 'string' ? [config['lint-ignore']] : config['lint-ignore'] || [];
 
-    var errors = [];
-    console.log('Starting jslint check...');
     config.module.forEach(function(mod) {
         libmod.moduleWalk(mod, config, function(name, ast) {
             if (config.ignores.indexOf(name) !== -1) {
+                console.log("Lint %s ... \033[1;34mignore\033[0m", name);
                 return;
             }
 
@@ -23,29 +22,24 @@ function lint(argv) {
             var content = fs.readFileSync(fileName, 'utf-8');
             var result = JSHINT(content);
 
+            console.log("Lint %s ... %s", name, result ? '\033[1;32msuccess\033[0m' : '\033[1;31mfail\033[0m');
+
             if (!result) {
-                JSHINT.errors.map(function(err) {
-                    err.fileName = name;
+                JSHINT.errors.forEach(function(error) {
+                    if (error && error.id) {
+                        console.log(
+                            "jslint %s: %s(%s:%s): %s", 
+                            error.id.replace('(', '').replace(')', ''), 
+                            error.name,
+                            error.line,
+                            error.character,
+                            error.reason
+                        );
+                        console.log('%s', error.evidence);
+                    }
                 });
-                errors = errors.concat(JSHINT.errors);
             }
-
-            console.log("[%s] %s", result ? '\033[1;32mSUCC\033[0m' : '\033[1;31mFAIL\033[0m', name);
         });
-    });
-
-    errors.forEach(function(error) {
-        if (error && error.id) {
-            console.log(
-                "jslint %s: %s(%s:%s): %s", 
-                error.id.replace('(', '').replace(')', ''), 
-                error.fileName,
-                error.line,
-                error.character,
-                error.raw
-            );
-            console.log('%s', error.evidence);
-        }
     });
 }
 
