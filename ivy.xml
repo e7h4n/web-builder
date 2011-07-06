@@ -1,5 +1,5 @@
 <ivy-module version="1.0">
-    <info organisation="external" module="web-builder" revision="1.0" status="release"/>
+    <info organisation="external" module="web-builder" revision="1.1" status="release"/>
 
 	<configurations>
         <conf name="dev" visibility="private" description="dev"/>
