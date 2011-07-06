@@ -1,5 +1,10 @@
 <ivy-module version="1.0">
     <info organisation="external" module="web-builder" revision="1.0" status="release"/>
+
+	<configurations>
+        <conf name="dev" visibility="private" description="dev"/>
+    </configurations>
+
     <publications>
         <artifact name="web-builder" type="zip"/>
     </publications>

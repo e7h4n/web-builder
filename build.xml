@@ -29,4 +29,9 @@
     <target name="clean">
         <delete dir="${build.dir}"/>
     </target>
+
+	<target name="resolve">
+		<ivy:settings username="${ivy.auth.username}" passwd="${ivy.auth.password}" />
+		<ivy:retrieve pattern="lib/[artifact].[ext]" conf="dev" />
+	</target>
 </project>
