@@ -1,11 +1,16 @@
 <ivy-module version="1.0">
-    <info organisation="external" module="web-builder" revision="1.1" status="release"/>
+    <info organisation="toolbox" module="web-builder" revision="1.1" status="release"/>
 
-	<configurations>
-        <conf name="dev" visibility="private" description="dev"/>
+    <configurations>
+        <conf name="core" description="application core" />
+        <conf name="dev" extends="core" visibility="private" description="test"/>
     </configurations>
 
     <publications>
         <artifact name="web-builder" type="zip"/>
     </publications>
+
+    <dependencies>
+        <dependency org="external" name="jsdoc" rev="2.4.0"/>
+    </dependencies>
 </ivy-module>
