@@ -1,7 +1,15 @@
 var fs = require('fs');
 var path = require('path');
 var uglifyjs = require('uglify-js');
-var sys = require('sys');
+var cssmin = require('./action/cssmin.js').cssmin;
+
+function getFileName(file) {
+    if (file.indexOf('.css') !== -1 || file.indexOf('.js') !== -1) {
+        return file;
+    } else {
+        return file + '.js';
+    }
+}
 
 /**
  * 递归地创建一个目录
@@ -19,19 +27,26 @@ function mkdirSilent(dir) {
 }
 
 function moduleWalk(moduleName, config, process, trace) {
-    var fileName = moduleName.indexOf('.js') === -1 ? moduleName + '.js' : moduleName;
+    var fileName = getFileName(moduleName);
     var deps = [];
 
     trace = trace ? trace : [];
 
     var code = fs.readFileSync(path.resolve(config.srcDir, fileName), 'utf-8');
-    var ast = normlizePath(
-        uglifyjs.parser.parse(code), 
-        path.dirname(path.resolve(config.srcDir, fileName)), 
-        config
-    );
 
-    deps = getDependencies(ast);
+    var ast = null;
+    if (fileName.indexOf('.css') === -1) {
+        ast = normlizePath(
+            uglifyjs.parser.parse(code), 
+            path.dirname(path.resolve(config.srcDir, fileName)), 
+            config
+        );
+
+        deps = getJSDependencies(ast);
+    } else {
+        ast = code;
+        deps = getCSSDependencies(ast, moduleName);
+    }
 
     process(moduleName, ast);
 
@@ -43,14 +58,28 @@ function moduleWalk(moduleName, config, process, trace) {
     });
 }
 
+function getCSSDependencies(code, moduleName) {
+    var regexp = /@import\s+url\(["'](.+?\.css)["']\)/ig;
+    var deps = [];
+    var match = regexp.exec(code);
+
+    while (match !== null) {
+        var mod = path.join(path.dirname(moduleName), match[1]);
+        deps.push(mod);
+        match = regexp.exec(code);
+    }
+
+    return deps;
+}
+
 /**
  * 获取一个模块的依赖关系
  *
- * @method getDependencies
+ * @method getJSDependencies
  * @param {Array}ast AST
  * @return {Array} 依赖数组
  */
-function getDependencies(ast) {
+function getJSDependencies(ast) {
     return getStaticDependencies(ast) || getDynamicDependencies(ast);
 }
 
@@ -136,6 +165,29 @@ function getStaticDependencies(ast) {
  * @return {String} 生成的代码
  */
 function generateCode(ast, name, compress) {
+    if (name.indexOf('.css') !== -1) {
+        return generateCSSCode(ast, name, compress);
+    } else {
+        return generateJSCode(ast, name, compress);
+    }
+}
+
+function generateCSSCode(ast, name, compress) {
+    var regexp = /@import\s+url\(["'](.+?\.css)["']\);?/ig;
+    ast = ast.replace(regexp, '');
+    return cssmin(ast);
+}
+
+/**
+ * 从 AST 生成代码
+ *
+ * @method generateCode
+ * @param {Array}ast AST
+ * @param {String}name 模块名
+ * @param {Boolean}compress 是否压缩代码
+ * @return {String} 生成的代码
+ */
+function generateJSCode(ast, name, compress) {
     // ast: [ 'toplevel', [ [ 'stat', [Object] ], [ 'stat', [Object], ... ] ] ]
     var stats = ast[1];
 

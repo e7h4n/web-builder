@@ -1,0 +1,198 @@
+#!/usr/bin/env node
+var uglify = require('uglify-js');
+var fs = require('fs');
+var path = require('path');
+var pro = uglify.uglify;
+var optimist = require('optimist')
+    .options('js-dir', {
+        describe: 'JavaScript source code root dir',
+        demand: true
+    })
+    .options('tmpl-dir', {
+        describe: 'Template source code root dir',
+        demand: true
+    })
+    .options('compress', {
+        describe: 'compress generate code',
+        default: true
+    })
+    .options('build-dir', {
+        describe: 'generated code output dir',
+        demand: true
+    });
+
+var argv = optimist.argv;
+var jsDir = argv['js-dir'];
+var tmplDir = argv['tmpl-dir'];
+var buildDir = argv['build-dir'];
+var compress = argv.compress;
+
+/**
+ * 递归地创建一个目录
+ *
+ * @method mkdirSilent
+ * @param {String}dir
+ */
+function mkdirSilent(dir) {
+    if (dir !== '/' && !path.existsSync(path.dirname(dir))) {
+        mkdirSilent(path.dirname(dir));
+    }
+    if (!path.existsSync(dir)) {
+        fs.mkdirSync(dir, '0755');
+    }
+}
+
+function generateAST (content) {
+    return [
+    "toplevel",
+    [
+        [
+            "stat",
+            [
+                "call",
+                [
+                    "name",
+                    "define"
+                ],
+                [
+                    [
+                        "function",
+                        null,
+                        [
+                            "require"
+                        ],
+                        [
+                            [
+                                "var",
+                                [
+                                    [
+                                        "Template",
+                                        [
+                                            "call",
+                                            [
+                                                "name",
+                                                "require"
+                                            ],
+                                            [
+                                                [
+                                                    "string",
+                                                    "../util/Template"
+                                            ]
+                                            ]
+                                        ]
+                                ]
+                                ]
+                        ],
+                        [
+                            "return",
+                            [
+                                "new",
+                                [
+                                    "name",
+                                    "Template"
+                                ],
+                                [
+                                    [
+                                        "string",
+                                        content
+                                ]
+                                ]
+                            ]
+                        ]
+                        ]
+                ]
+                ]
+            ]
+    ]
+    ]
+];
+}
+
+/**
+ * 获取模板文件名
+ * @method getTmplName
+ * @param {Array}ast AST
+ */
+function getTmplName(ast) {
+    var tmplName = null;
+    for (var i = 0, l = ast.length; i < l; i++) {
+        var obj = ast[i];
+
+        if (!obj) {
+            continue;
+        }
+
+        // [ 'call',
+        //   [ 'dot', [ 'name', 'Template' ], 'preload' ]
+        //   [ [ 'string', 'tmplName' ] ] ]
+        if (
+                obj[0] === 'call' &&
+                        obj[1] &&
+                        obj[1][0] === 'dot' &&
+                        obj[1][1] &&
+                        obj[1][1][0] === 'name' &&
+                        obj[1][1][1] === 'Template' &&
+                        obj[1][2] === 'preload' &&
+                        obj[2] &&
+                        obj[2][0] &&
+                        obj[2][0][0] === 'string' &&
+                        obj[2][0][1]
+                ) {
+            tmplName = obj[2][0][1];
+        } else {
+            if (obj.constructor === Array) {
+                tmplName = getTmplName(obj);
+            }
+        }
+    }
+    return tmplName;
+}
+
+
+fs.readdir(jsDir, function(err, files) {
+    if (err) {
+        throw err;
+    }
+    process.stdout.write('Generate template ...');
+    var count = 0;
+    files.forEach(function(file) {
+        if (file === '.svn') {
+            return;
+        }
+
+        fs.readFile(path.resolve(jsDir, file), 'utf-8', function(err, content) {
+            if (err) {
+                throw err;
+            }
+            var ast = uglify.parser.parse(content);
+            var tmplName = getTmplName(ast);
+            fs.readFile(path.resolve(tmplDir, tmplName), 'utf-8', function(err, content) {
+                process.stdout.write('.');
+                if (err) {
+                    throw err;
+                }
+                var ast = generateAST(content);
+                var script = uglify.uglify.gen_code(ast, {
+                    beautify: !compress,
+                    indent_level: 2
+                }) + ';';
+                var filePath = path.resolve(buildDir, file);
+                var dirname = path.dirname(filePath);
+                mkdirSilent(dirname);
+                fs.writeFile(filePath, script, function(err) {
+                    count += 1;
+                    if (count === files.length) {
+                        process.stdout.write(' done\n');
+                    }
+                    if (err) {
+                        throw err;
+                    }
+                });
+            });
+        });
+    });
+});
+
+/*
+vim: ft=javascript
+*/

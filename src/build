@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 var optimist = require('optimist')
     .usage('Youdao JS Builder ' + require('./version').version + '\nUsage: $0 [Options] [module ..]')
     .options('compress', {
@@ -22,12 +21,19 @@ var optimist = require('optimist')
         describe: 'CommonJS Module Loader file',
         default: './loader.js'
     })
+    .options('preload', {
+        describe: 'JS files to be preload'
+    })
     .options('module', {
         describe: 'Module name which to be generated',
         demand: true
     })
     .options('dry-run', {
         describe: 'Don\'t write any file to system',
+        default: false
+    })
+    .options('without-loader', {
+        describe: 'Don\'t invoke commonjs loader',
         default: false
     })
     .options('lint-only', {
@@ -37,15 +43,27 @@ var optimist = require('optimist')
     .options('lint-ignore', {
         describe: 'Don\'t run lint for this file',
     })
+    .options('force-pass-lint', {
+        describe: 'Compile javascript even though jslint failed ',
+        default: false
+    })
 ;
 
 var argv = optimist.argv;
 if (argv.help || argv.h) {
     optimist.showHelp();
 } else {
-    require('./action/lint').lint(argv);
+    var lintResult = require('./action/lint').lint(argv);
+
+    if (argv['force-pass-lint'] && !lintResult) {
+        process.stderr.write('exit 1: Lint check failed\n');
+        process.exit(1);
+    }
 
     if (!argv['lint-only']) {
         require('./action/build').build(argv);
     }
 }
+/*
+vim: ft=javascript
+*/
