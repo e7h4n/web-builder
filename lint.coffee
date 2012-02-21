@@ -1,6 +1,6 @@
 path = require "path"
 jslint = require "jslint"
-_ = require "Underscore"
+_ = require "underscore"
 fs= require "fs"
 module = require "./lib/module"
 

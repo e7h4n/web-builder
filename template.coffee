@@ -4,7 +4,7 @@ fs = require "fs"
 wrench = require "wrench"
 path = require "path"
 module = require "./lib/module"
-_ = require "Underscore"
+_ = require "underscore"
 
 template = (config) ->
     _.defaults config, {

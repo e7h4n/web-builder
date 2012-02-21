@@ -3,7 +3,7 @@ fs = require "fs"
 uglifyjs = require "uglify-js"
 wrench = require "wrench"
 module = require "./lib/module"
-_ = require "Underscore"
+_ = require "underscore"
 
 build = (config) ->
     _.defaults config, {
