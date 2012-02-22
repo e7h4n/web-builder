@@ -3,7 +3,6 @@ fs = require "fs"
 fs = require "fs"
 wrench = require "wrench"
 path = require "path"
-module = require "./lib/module"
 _ = require "underscore"
 
 template = (config) ->
@@ -18,7 +17,7 @@ template = (config) ->
     config.tmplDir = path.resolve config.tmplDir
     config.buildDir = path.resolve config.buildDir
 
-    (fs.readFileSync config.jsDir).forEach (file) ->
+    (wrench.readdirSyncRecursive config.jsDir).forEach (file) ->
         if (file.indexOf ".js") is -1
             return
 
@@ -38,7 +37,7 @@ template = (config) ->
 
         wrench.mkdirSyncRecursive (path.dirname outputFilePath), 0755
 
-        fs.writeFile outputFilePath, tmplScript
+        fs.writeFileSync outputFilePath, tmplScript
 
 generateCode = (content, tmplClass) ->
     return """
@@ -53,6 +52,8 @@ generateCode = (content, tmplClass) ->
 PLACE_HOLDER = "PLACE_HOLDER"
 
 getTmplName = (ast) ->
+    module = require "./lib/module"
+
     tmplName = null
 
     templateAst = [ "call",

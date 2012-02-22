@@ -48,4 +48,4 @@ lint = (config) ->
 
     return totalErrorCount is 0
 
-exports.lint = lint;
+exports.lint = lint
