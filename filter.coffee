@@ -43,15 +43,13 @@ filterCopy = (src, dst, exts = textFileExts) ->
             fs.writeFileSync outputFile, content
             return
 
-        reader = new wrench.LineReader inputFile
+        content = fs.readFileSync inputFile, "utf-8"
         fp = fs.openSync outputFile, "w+"
 
         ignoreFlag = false
 
-        while reader.hasNextLine()
+        (content.split "\n").forEach (line) ->
             ignoreLine = false
-
-            line = reader.getNextLine()
 
             if (line.indexOf DELETE_START) isnt -1
                 ignoreFlag = true
