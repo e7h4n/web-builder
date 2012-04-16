@@ -56,7 +56,7 @@ build = (config) ->
         outputfile = path.resolve config.buildDir, (module.fixFilename modName)
 
         dir = path.resolve outputfile, ".."
-        wrench.mkdirSyncRecursive dir, 0755
+        wrench.mkdirSyncRecursive dir, 0o755
 
         fs.writeFile outputfile, finalCode, "utf-8"
 

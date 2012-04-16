@@ -4,7 +4,7 @@ wrench = require "wrench"
 
 makedir = (dst) ->
     if not path.existsSync path
-        wrench.mkdirSyncRecursive dst, 0755
+        wrench.mkdirSyncRecursive dst, 0o755
 
 DELETE_START = "@DELETE_START@"
 DELETE_END = "@DELETE_END@"
