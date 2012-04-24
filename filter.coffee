@@ -1,14 +1,11 @@
 path = require "path"
 fs = require "fs"
 wrench = require "wrench"
+_ = require "underscore"
 
 makedir = (dst) ->
     if not path.existsSync path
         wrench.mkdirSyncRecursive dst, 0o755
-
-DELETE_START = "@DELETE_START@"
-DELETE_END = "@DELETE_END@"
-DELETE_LINE = "@DELETE_LINE@"
 
 textFileExts = [
     ".txt"
@@ -22,7 +19,29 @@ textFileExts = [
     ".config"
 ]
 
-filterCopy = (src, dst, exts = textFileExts) ->
+getInterpolate = (fileName) ->
+    extName = (fileName.substr (fileName.lastIndexOf ".")).toLowerCase()
+
+    switch extName
+        when ".html", ".htm", ".mustache"
+            setting =
+                escape: /<!-{1,2}<%-([\s\S]+?)%>-{1,2}>/g
+                evaluate: /<!-{1,2}<%([\s\S]+?)%>-{1,2}>/g
+                interpolate: /<!-{1,2}<%=([\s\S]+?)%>-{1,2}>/g
+        when ".js", ".css", ".less"
+            setting =
+                escape: /\/[\*-]<%-([\s\S]+?)%>[\*-]\//g
+                evaluate: /\/[\*-]<%([\s\S]+?)%>[\*-]\//g
+                interpolate: /\/[\*-]<%=([\s\S]+?)%>[\*-]\//g
+        else
+            setting =
+                escape: /<%-([\s\S]+?)%>/g
+                evaluate: /<%([\s\S]+?)%>/g
+                interpolate: /<%=([\s\S]+?)%>/g
+
+    return setting
+
+filterCopy = (src, dst, exts = textFileExts, templateData = {}) ->
     src = path.resolve src
     dst = path.resolve dst
 
@@ -44,26 +63,11 @@ filterCopy = (src, dst, exts = textFileExts) ->
             return
 
         content = fs.readFileSync inputFile, "utf-8"
-        fp = fs.openSync outputFile, "w+"
 
-        ignoreFlag = false
+        _.templateSettings = getInterpolate inputFile
+        template = _.template content
 
-        (content.split "\n").forEach (line) ->
-            ignoreLine = false
-
-            if (line.indexOf DELETE_START) isnt -1
-                ignoreFlag = true
-                ignoreLine = true
-            else if (line.indexOf DELETE_END) isnt -1
-                ignoreFlag = false
-                ignoreLine = true
-            else if (line.indexOf DELETE_LINE) isnt -1
-                ignoreLine = true
-
-            if not ignoreFlag and not ignoreLine
-                fs.writeSync fp, line + "\n"
-
-        fs.closeSync fp
+        fs.writeFileSync outputFile, (template templateData), "utf-8"
 
 exports.copy = filterCopy
 
