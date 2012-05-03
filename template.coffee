@@ -35,7 +35,7 @@ template = (config) ->
 
         outputFilePath = path.resolve config.buildDir, file
 
-        wrench.mkdirSyncRecursive (path.dirname outputFilePath), 0755
+        wrench.mkdirSyncRecursive (path.dirname outputFilePath), 0o755
 
         fs.writeFileSync outputFilePath, tmplScript
 

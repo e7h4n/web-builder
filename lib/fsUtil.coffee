@@ -13,6 +13,6 @@ mkdirSilent = (dir) ->
         mkdirSilent path.dirname dir
 
     if not path.existsSync dir
-        fs.mkdirSync dir, "0755"
+        fs.mkdirSync dir, 0o755
 
 exports.mkdirSilent = mkdirSilent
