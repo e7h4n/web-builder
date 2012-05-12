@@ -31,7 +31,7 @@ build = (config) ->
         (require "./combo").build config
 
 exports.build = build
-exports.version = 2.0
+exports.version = "0.1.4"
 
 if not module.parent
     path = require "path"
@@ -84,7 +84,7 @@ if not module.parent
 
     opt = require "optimist"
 
-    opt = opt.usage "Youdao JS Builder #{exports.version} \n Usage $0 [Options] [module ..]"
+    opt = opt.usage "Web Builder #{exports.version} \n Usage $0 [Options] [module ..]"
 
     for optionName, optionValue of options
         opt = opt.options optionName, optionValue

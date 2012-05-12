@@ -1,0 +1,35 @@
+{
+    "name": "web-builder",
+
+    "description": "Web tool set for compress & combine static files.",
+
+    "author": {
+        "name": "pw",
+        "email": "perfectworks@gmail.com",
+        "url": "http://github.com/perfectworks"
+    },
+
+    "dependencies": {
+        "cssmin": "*",
+        "jslint": "*",
+        "less": "*",
+        "optimist": "*",
+        "uglify-js": "*",
+        "underscore": "*",
+        "wrench": "*",
+        "coffee-script": "*"
+    },
+
+    "version": "0.1.4",
+
+    "main": "./build",
+
+    "bin": {
+        "web-builder": "./build.coffee"
+    },
+
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:mishoo/UglifyJS.git"
+    }
+}
