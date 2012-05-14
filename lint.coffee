@@ -38,6 +38,9 @@ lint = (config) ->
                 lintData = jslint.data()
                 totalErrorCount += lintData.errors.length
                 lintData.errors.forEach (error, index) ->
+                    if not error
+                        return
+
                     process.stderr.write """
                     ##{index + 1} #{error.reason}
                     #{error.evidence} // Line #{error.line}, Position #{error.character}\n

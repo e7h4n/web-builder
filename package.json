@@ -11,7 +11,7 @@
 
     "dependencies": {
         "cssmin": "*",
-        "jslint": "*",
+        "jslint": "0.1.2",
         "less": "*",
         "optimist": "*",
         "uglify-js": "*",
@@ -20,7 +20,7 @@
         "coffee-script": "*"
     },
 
-    "version": "0.1.4",
+    "version": "0.1.5",
 
     "main": "./build",
 
