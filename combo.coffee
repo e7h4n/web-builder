@@ -4,6 +4,27 @@ uglifyjs = require "uglify-js"
 wrench = require "wrench"
 module = require "./lib/module"
 _ = require "underscore"
+crypto = require "crypto"
+CACHE = "./.front-build-cache"
+
+wrench.mkdirSyncRecursive CACHE, 0o755
+
+cacheFile = (code, compress, generator) ->
+    if typeof code != 'string'
+        code = JSON.stringify code
+
+    fileHash = (((crypto.createHash "sha1").update code).digest "hex")
+    if compress
+        fileHash += "_compress"
+
+    cache = path.resolve CACHE, fileHash
+    if path.existsSync cache
+        code = fs.readFileSync cache, "utf-8"
+    else
+        code = generator()
+        fs.writeFileSync cache, code, "utf-8"
+
+    return code
 
 build = (config) ->
     _.defaults config, {
@@ -29,16 +50,17 @@ build = (config) ->
     config.preload.forEach (modName) ->
         filename = module.fixFilename modName
         code = module.getModContent (module.fixFilename modName), config.srcDir
-        ast = uglifyjs.parser.parse code
+        finalCode += cacheFile code, config.compress, () ->
+            ast = uglifyjs.parser.parse code
 
-        if config.compress
-            ast = uglifyjs.uglify.ast_mangle ast
-            ast = uglifyjs.uglify.ast_squeeze ast
+            if config.compress
+                ast = uglifyjs.uglify.ast_mangle ast
+                ast = uglifyjs.uglify.ast_squeeze ast
 
-        finalCode += (uglifyjs.uglify.gen_code ast, {
-            beautify: !config.compress,
-            indent_level: 2
-        }) + ';'
+            (uglifyjs.uglify.gen_code ast, {
+                beautify: !config.compress,
+                indent_level: 2
+            }) + ';'
 
     config.module.forEach (modName) ->
         if path.existsSync path.resolve config.srcDir, (module.fixFilename modName)
@@ -46,7 +68,8 @@ build = (config) ->
 
             module.moduleWalk modName, config.srcDir, (modName, code) ->
                 if modules[modName] is undefined
-                    modules[modName] = module.generateCode code, modName, config.compress
+                    modules[modName] = cacheFile code, config.compress, () ->
+                        module.generateCode code, modName, config.compress
             , depsQueue
 
             depsQueue.push modName
