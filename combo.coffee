@@ -72,9 +72,12 @@ build = (config) ->
                         module.generateCode code, modName, config.compress
             , depsQueue
 
+            depsQueue = depsQueue.sort()
+
             depsQueue.push modName
+
             depsQueue.forEach (modName) ->
-                finalCode += modules[modName]
+                finalCode += modules[modName] + "\n"
 
         outputfile = path.resolve config.buildDir, (module.fixFilename modName)
 
